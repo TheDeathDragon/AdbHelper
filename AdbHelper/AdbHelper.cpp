@@ -3,6 +3,7 @@
 #include <filesystem>
 #include<vector>
 #include<string>
+#include <ctime>
 using namespace std;
 namespace fs = std::filesystem;
 
@@ -30,20 +31,36 @@ int main()
 	int choice = 0;
 	int cameraShotCount = 0;
 
-	cout << "请先确保ADB能正常工作！(当前版本：" << __DATE__ <<")" << endl;
+	// 获取当前时间点
+	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+
+	// 将时间点转换为time_t，以便用于strftime()
+	std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
+
+	// 将time_t转换为本地时间
+	std::tm local_tm;
+	localtime_s(&local_tm, &now_time_t);
+
+	// 格式化时间字符串
+	char formatted_time[20];
+	std::strftime(formatted_time, sizeof(formatted_time), "%Y%m%d_%H_%M", &local_tm);
+
+	std::cout << "当前系统时间: " << formatted_time << std::endl;
+
+	cout << "\n请先确保ADB能正常工作！(当前版本：" << __DATE__ <<")" << endl;
 
 	while (true) {
 		cout << "\n便捷ADB小工具菜单：\n" << endl;
 		cout << "0  > 退出程序" << endl;
-		cout << "1  > 导出DebugLog(/data/debuglogger/)" << endl;
-		cout << "2  > 导出DebugLog(/sdcard/debuglogger/)" << endl;
+		cout << "1  > 导出MTK DebugLog(/data/debuglogger/)" << endl;
+		cout << "2  > 导出展讯 YLog(/data/ylog/)" << endl;
 		cout << "3  > 导出相片、视频(/sdcard/DCIM/)" << endl;
 		cout << "4  > 导出屏幕录像(/sdcard/Movies/)" << endl;
 		cout << "5  > 导出屏幕截图(/sdcard/Pictures/)" << endl;
 		cout << "6  > 查看当前Activity" << endl;
-		cout << "7  > 一键Push文件到Sdcard目录，文件需放在Files中" << endl;
-		cout << "8  > 一键批量安装APK，文件需放在Apks中" << endl;
-		cout << "9  > 抓取ADBLog(保存为system.log)" << endl;
+		cout << "7  > 一键Push文件到Sdcard目录，文件需放在Files中(当前目录自动创建)" << endl;
+		cout << "8  > 一键批量安装APK，文件需放在Apks中(当前目录自动创建)" << endl;
+		cout << "9  > 抓取ADB Logcat log(保存为system.log)" << endl;
 		cout << "10 > 抓取屏幕截图" << endl;
 		cout << "11 > 循环拍照测试" << endl;
 		cout << "12 > 导出电池曲线(/sdcard/BatteryLog.csv)" << endl;
@@ -51,6 +68,7 @@ int main()
 		cout << "14 > 查看设备FingerPrint" << endl;
 		cout << "15 > 查看设备屏幕分辨率和DPI" << endl;
 		cout << "16 > 抓取Kernel Log(保存为dmesg.log)" << endl;
+		cout << "17 > 结束Monkey测试" << endl;
 
 		cout << "\n请选择 > ";
 		cin >> choice;
@@ -60,10 +78,16 @@ int main()
 		case 0:
 			exit(0);
 		case 1:
-			system("adb pull /data/debuglogger/");
+			tempString = "adb pull /data/debuglogger/ debuglogger_";
+			tempString += formatted_time;
+			system(tempString.c_str());
+			tempString = "";
 			break;
 		case 2:
-			system("adb pull /sdcard/debuglogger/");
+			tempString = "adb pull /data/ylog/ ylog_";
+			tempString += formatted_time;
+			system(tempString.c_str());
+			tempString = "";
 			break;
 		case 3:
 			system("adb pull /sdcard/DCIM/");
@@ -98,7 +122,7 @@ int main()
 				if (p.path().extension() == apkExt) {
 					apkCurrent = p.path().stem().string() + apkExt;
 					cout << "当前正在安装：" << apkCurrent << endl;
-					tempString = "adb install -r .\\" + apkPath + "\\" + apkCurrent;
+					tempString = "adb install -r -g .\\" + apkPath + "\\" + apkCurrent;
 					system(tempString.c_str());
 					tempString = "";
 				}
@@ -152,6 +176,10 @@ int main()
 			system(tempString.c_str());
 			tempString = "";
 			break;
+		case 17:
+			tempString = "adb shell \"ps - A | grep monkey | awk '{print $2}' | xargs kill - 9\"";
+			system(tempString.c_str());
+			tempString = "";
 		default:
 			break;
 		}
