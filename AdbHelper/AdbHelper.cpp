@@ -15,7 +15,7 @@ bool dirExists(const std::string& path) {
 		return false;
 
 	if (ftyp & FILE_ATTRIBUTE_DIRECTORY)
-		return true; 
+		return true;
 
 	return false;
 }
@@ -29,7 +29,7 @@ int main()
 	string powershell("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe");
 
 	int choice = 0;
-	int cameraShotCount = 0;
+	int testCount = 0;
 
 	// 获取当前时间点
 	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
@@ -47,7 +47,7 @@ int main()
 
 	std::cout << "当前系统时间: " << formatted_time << std::endl;
 
-	cout << "\n请先确保ADB能正常工作！(当前版本：" << __DATE__ <<")" << endl;
+	cout << "\n请先确保ADB能正常工作！(当前版本：" << __DATE__ << ")" << endl;
 
 	while (true) {
 		cout << "\n便捷ADB小工具菜单：\n" << endl;
@@ -69,6 +69,8 @@ int main()
 		cout << "15 > 查看设备屏幕分辨率和DPI" << endl;
 		cout << "16 > 抓取Kernel Log(保存为dmesg.log)" << endl;
 		cout << "17 > 结束Monkey测试" << endl;
+		cout << "18 > 亮灭屏测试" << endl;
+		cout << "19 > 触发展讯SystemDump" << endl;
 
 		cout << "\n请选择 > ";
 		cin >> choice;
@@ -142,14 +144,14 @@ int main()
 			break;
 		case 11:
 			cout << "请输入要测试拍照的次数：";
-			cin >> cameraShotCount;
-			if (cameraShotCount <= 0) {
+			cin >> testCount;
+			if (testCount <= 0) {
 				cout << "输入有误！" << endl;
 				break;
 			}
 			system("adb shell am start com.mediatek.camera/com.mediatek.camera.CameraLauncher");
 			Sleep(3 * 1000);
-			for (int i = 0; i < cameraShotCount; i++)
+			for (int i = 0; i < testCount; i++)
 			{
 				cout << "拍照次数：" << i + 1 << endl;
 				system("adb shell input keyevent 27");
@@ -180,11 +182,36 @@ int main()
 			tempString = "adb shell \"ps - A | grep monkey | awk '{print $2}' | xargs kill - 9\"";
 			system(tempString.c_str());
 			tempString = "";
+			break;
+		case 18:
+			cout << "请输入要测试亮灭屏的次数：";
+			cin >> testCount;
+			if (testCount <= 0) {
+				cout << "输入有误！" << endl;
+				break;
+			}
+			Sleep(3 * 1000);
+			for (int i = 0; i < testCount; i++)
+			{
+				cout << "亮灭屏次数：" << i + 1 << endl;
+				system("adb shell input keyevent KEYCODE_POWER");
+				Sleep(1 * 1000);
+			}
+			break;
+		case 19:
+			cout << "请确保在进行SystemDump之前，插入了SD卡并且可用空间大于3G！" << endl;
+			cout << "\n按回车继续！\n" << endl;
+			system("adb root");
+			getchar();
+			getchar();
+			system("adb shell \"echo 'c' > /proc/sysrq-trigger\"");
+			cout << "\n已经下发指令给设备，设备将会重启进入SystemDump模式！" << endl;
 		default:
 			break;
 		}
 		cout << "\n按回车继续..." << endl;
 		getchar();
 		getchar();
+		system("cls");
 	}
 }
